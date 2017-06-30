@@ -242,6 +242,7 @@ pub trait RegistryData {
 mod index;
 mod remote;
 mod local;
+mod ipfs;
 
 fn short_name(id: &SourceId) -> String {
     let hash = hex::short_hash(id);
@@ -262,6 +263,14 @@ impl<'cfg> RegistrySource<'cfg> {
                  config: &'cfg Config) -> RegistrySource<'cfg> {
         let name = short_name(source_id);
         let ops = local::LocalRegistry::new(path, config, &name);
+        RegistrySource::new(source_id, config, &name, Box::new(ops), false)
+    }
+
+    pub fn ipfs(source_id: &SourceId,
+                 ipfs_path: &Path,
+                 config: &'cfg Config) -> RegistrySource<'cfg> {
+        let name = short_name(source_id);
+        let ops = ipfs::IPFSRegistry::new(ipfs_path, config, &name);
         RegistrySource::new(source_id, config, &name, Box::new(ops), false)
     }
 

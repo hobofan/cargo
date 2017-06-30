@@ -102,6 +102,10 @@ impl Config {
         self.home_path.join("registry").join("cache")
     }
 
+    pub fn registry_ipfs_path(&self) -> Filesystem {
+        self.home_path.join("registry").join("ipfs")
+    }
+
     pub fn registry_source_path(&self) -> Filesystem {
         self.home_path.join("registry").join("src")
     }

@@ -87,6 +87,8 @@ enum Kind {
     Registry,
     /// represents a local filesystem-based registry
     LocalRegistry,
+    /// represents a local filesystem-based registry that is based on an IPFS reference
+    IPFSRegistry,
     /// represents a directory-based registry
     Directory,
 }
@@ -196,6 +198,10 @@ impl SourceId {
         Ok(SourceId::new(Kind::LocalRegistry, url))
     }
 
+    pub fn for_ipfs_registry(url: &Url) -> CargoResult<SourceId> {
+        Ok(SourceId::new(Kind::IPFSRegistry, url.clone()))
+    }
+
     pub fn for_directory(path: &Path) -> CargoResult<SourceId> {
         let url = path.to_url()?;
         Ok(SourceId::new(Kind::Directory, url))
@@ -230,7 +236,7 @@ impl SourceId {
         self.inner.kind == Kind::Path
     }
     pub fn is_registry(&self) -> bool {
-        self.inner.kind == Kind::Registry || self.inner.kind == Kind::LocalRegistry
+        self.inner.kind == Kind::Registry || self.inner.kind == Kind::LocalRegistry || self.inner.kind == Kind::IPFSRegistry
     }
 
     pub fn is_git(&self) -> bool {
@@ -259,6 +265,14 @@ impl SourceId {
                     Err(()) => panic!("path sources cannot be remote"),
                 };
                 Box::new(RegistrySource::local(self, &path, config))
+            }
+            Kind::IPFSRegistry => {
+                // TODO: check for apropriate schemes
+                let path = match self.inner.url.to_file_path() {
+                    Ok(p) => p,
+                    Err(()) => panic!("path sources cannot be remote"),
+                };
+                Box::new(RegistrySource::ipfs(self, &path, config))
             }
             Kind::Directory => {
                 let path = match self.inner.url.to_file_path() {
@@ -361,6 +375,9 @@ impl fmt::Display for SourceId {
             SourceIdInner { kind: Kind::LocalRegistry, ref url, .. } => {
                 write!(f, "registry {}", url)
             }
+            SourceIdInner { kind: Kind::IPFSRegistry, ref url, .. } => {
+                write!(f, "registry (IPFS) {}", url)
+            }
             SourceIdInner { kind: Kind::Directory, ref url, .. } => {
                 write!(f, "dir {}", url)
             }
@@ -456,6 +473,9 @@ impl<'a> fmt::Display for SourceIdToUrl<'a> {
             }
             SourceIdInner { kind: Kind::LocalRegistry, ref url, .. } => {
                 write!(f, "local-registry+{}", url)
+            }
+            SourceIdInner { kind: Kind::IPFSRegistry, ref url, .. } => {
+                write!(f, "ipfs-registry+{}", url)
             }
             SourceIdInner { kind: Kind::Directory, ref url, .. } => {
                 write!(f, "directory+{}", url)

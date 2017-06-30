@@ -142,6 +142,10 @@ a lock file compatible with `{orig}` cannot be generated in this situation
             path.push(s);
             srcs.push(SourceId::for_local_registry(&path)?);
         }
+        if let Some(val) = table.get("ipfs-registry") {
+            let ipfs_url = url(val, &format!("source.{}.registry", name))?;
+            srcs.push(SourceId::for_ipfs_registry(&ipfs_url)?);
+        }
         if let Some(val) = table.get("directory") {
             let (s, path) = val.string(&format!("source.{}.directory",
                                                      name))?;
